@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    // 基本原理
+    function docs() {
+        const obj = {
+            text: 'hello world'
+        }
+        // 副作用函数
+        function effect() {
+            // 当读取obj.text时 --> 触发读取操作 --> 将副作用函数搜集到桶中
+            document.body.innerHTML = obj.text
+        }
+        //读取obj.text --> 触发副作用函数 --> 将桶里面的副作用函数依次执行
+    }
+
+
+
+    // 基本的响应原理具体实现
+    // 1. 创建一个桶，用于收集副作用函数
+    const bucket = new Set()
+    // 原始数据
+    const data = { text: 'hello world' }
+    // 创建代理
+    const obj = new Proxy(data, {
+        get(target, key) {
+            bucket.add(effect) // 将副作用函数添加到桶中
+            return target[key] // 返回原始数据
+        },
+        set(target, key, value) {
+            target[key] = value
+            bucket.forEach(effect => effect()) // 遍历桶中的副作用函数，依次执行
+            return true
+        }
+    })
+
+
+
+    // 列子
+    function effect() {
+        document.body.innerHTML = obj.text
+    }
+    effect()
+    setTimeout(() => {
+        obj.text = 'hello  vue3'
+    }, 1000);
+
+    // 存在的问题
+    // 1:副作用函数，这种硬编码的方式很不灵活
+    // 2:在副作用函数与被操作的目标字段之间建立明确的联系,读取不存在的属性也会触发副作用函数执行
+</script>
+
+</html>
