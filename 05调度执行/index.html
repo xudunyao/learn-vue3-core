@@ -94,7 +94,7 @@
                 {
                     scheduler(fn) {
                         jobQueue.add(fn) // 将副作用函数添加到队列中
-                        flushJob() // 刷新队列
+                        flushJob() // 当obj.foo++ ;obj.for++;执行的的时候，scheduler，合flushJob会执行两次，由于采用set结构的数据，里面只会存在一个effectFn，加上isFlushing标志位，所以只会执行一次
                     }
                 }
             )
