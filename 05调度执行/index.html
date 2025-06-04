@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    // 调度执行：所谓可调度，指的是当 trigger 动作触发副作用函数重新执行时，有能力决定副作用函数执行的时机、次数以及方式。
+    // 实现方法，就需要修改effect函数，options参数，options参数中可以包含调度执行的相关配置，比如是否立即执行、是否异步执行等。
+    function docs() {
+        // 第一步从新设计副作用注册函数
+        let activeEffect;
+        const effectStack = []; // 用来存储副作用函数栈
+        function effect(fn, options = {}) {
+            const effectFn = () => {
+                activeEffect = effectFn
+                cleannup(effectFn)
+                effectStack.push(activeEffect) //调用之前，先将当前副作用函数压入栈中将当前副作用函数压入栈中
+                fn()
+                effectStack.pop() //新增 执行完毕后将其从栈中弹出
+                activeEffect = effectStack[effectStack.length - 1] // 始终让 activeEffect 指向栈顶的副作用函数
+            }
+            effectFn.deps = [] // 用来存储依赖的键集合
+            effectFn.options = {} // 用来存储副作用函数的选项 新增
+            effectFn() // 立即执行副作用函数
+        }
+        // 第二步修改track函数，收集副作用函数的依赖
+        function track(target, key) {
+            if (!activeEffect) return
+            let depsMap = bucket.get(target)
+            if (!depsMap) {
+                bucket.set(target, (depsMap = new Map()))
+            }
+            let deps = depsMap.get(key) // 获取特定键的副作用函数集合(相关的依赖)
+            if (!deps) {
+                depsMap.set(key, (deps = new Set()))
+            }
+            deps.add(activeEffect)
+            activeEffect.deps.push(deps) // 将当前副作用函数添加到依赖集合中
+        }
+
+        function trigger(target, key) {
+            const depsMap = bucket.get(target)
+            if (!depsMap) return
+            const effects = depsMap.get(key)
+            const effectsToRun = new Set() // 创建一个新的集合，避免在遍历时修改原集合
+            // 这样做可以避免在遍历时修改原集合导致的无限循环问题
+            effects && effects.forEach(effect => {
+                // 新增守卫条件，避免无限递归循环
+                if (effect !== activeEffect) {
+                    effectsToRun.add(effect) // 只添加与当前副作用函数不同的副作用函数
+                }
+            })
+            effectsToRun && effectsToRun.forEach(effectFn => {
+                if (effectFn.options.scheduler) {
+                    effectFn.options.scheduler(effectFn) // 如果有调度器，则使用调度器执行副作用函数
+                } else {
+                    effectFn() // 否则直接执行副作用函数
+                }
+            }) // 新的写法
+        }
+        function cleannup(effectFn) {
+            effectFn.deps.forEach(deps => {
+                deps.delete(effectFn) // 从依赖集合中删除当前副作用函数
+            })
+            effectFn.deps.length = 0 // 清空依赖集合
+        }
+        //在 Vue.js 中连续多次修改响应式数据但只会触发一次更新，实际上 Vue.js 内部实现了一个更加完善的调度器，思路与上文介绍的相同
+        // flushPreFlushCbs 为用来包裹测试代码
+        function flushPreFlushCbs() {
+            const jobQueue = new Set() // 新增一个队列，用于存储待执行的任务
+            const p = Promise.resolve() // 新增一个 Promise 对象
+            let isFlushing = false // 新增一个标志位，表示是否正在刷新队列
+            function flushJob() {
+                if (isFlushing) return // 如果正在刷新队列，则直接返回
+                isFlushing = true // 设置标志位为 true，表示正在刷新队列
+                p.then(() => {
+                    jobQueue.forEach(job => job()) // 执行所有的任务
+                }).finally(() => {
+                    isFlushing = false // 刷新完成后，将标志位设置为 false
+                })
+            }
+            effect(
+                // 匿名的副作用函数
+                () => {
+                    document.body.innerHTML = obj.text
+                },
+                {
+                    scheduler(fn) {
+                        jobQueue.add(fn) // 将副作用函数添加到队列中
+                        flushJob() // 刷新队列
+                    }
+                }
+            )
+        }
+
+    }
+</script>
+
+</html
