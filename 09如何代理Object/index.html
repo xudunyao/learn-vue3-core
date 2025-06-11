@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    // 1: Proxy 可以创建一个代理对象。它能够实现对(其他对象)的代理Proxy 只能代理对象，无法代理非对象值，例如字符串、布尔值等
+    // 2: 代理：指的是对一个对象基本语义的代理。它允许我们拦截并重新定义对一个对象的基本操作
+          // 2.1 基本语义: obj.foo ,obj++,类似读取属性值、设置属性值，就属于基本语义的（基本操作），那么，Proxy 就可以拦截这些操作
+          // 2.2 非基本操作： obj.fn()，，调用一个对象下的方法，是由两个基本语义组成的。第一个基本语义是 get，即先通过 get 操作得到 obj.fn 属性。第二个基本语义是函数调用，即通过 get 得到 obj.fn 的值后再调用它
+    
+    // 3：Reflect: Reflect 是一个内置的对象，它提供拦截 JavaScript 操作的方法。这些方法与 proxy handlers 的方法相同。Reflect 不是一个函数对象，因此它是不可构造的。
+    // 4: Proxy 与 Reflect 的关系：Proxy 与 Reflect 之间是一一对应的关系，也就是说，每一个 Proxy 对象都对应一个 Reflect 对象，它们的关系是，Proxy 对象拦截赋值操作，然后调用 Reflect.set 方法，完成赋值操作；Proxy 对象拦截读取操作，然后调用 Reflect.get 方法，完成读取操作。
+</script>
+
+</html
