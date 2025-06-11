@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    // 解决方案：
+    function ref(value) {
+        const wrapper = {
+            value
+        }
+        // 定义一个不可枚举的属性 _v_isRef_ ，值为 true，表示这是一个 ref 对象
+        Object.definePoroperty(wrapper, '_v_isRef_', {
+            value: true
+        })
+        return reactive(wrapper)
+    }
+
+    //1: 响应式数据丢失,再vue.js中，我们通常要把数据暴露到模板中使用如下:
+    // export default {
+    //     setup(){
+    //         const  obj = reactive({ foo: 1, bar: 2})
+    //     }
+    //     return {
+    //         ...obj
+    //     }
+    // }
+    // 上面的代码会，因为obj是响应式数据，但是被解构了，所以失去了响应性
+    // 同理：
+    //  obj 是响应式数据
+    //  const obj = reactive({ foo: 1, bar: 2 })
+    //  // 将响应式数据展开到一个新的对象 newObj
+    //  const newObj = {
+    //  ...obj
+    //  }
+    //  effect(() => {
+    //  // 在副作用函数内通过新的对象 newObj 读取 foo 属性值
+    //  console.log(newObj.foo)
+    //  })
+    //  // 很显然，此时修改 obj.foo 并不会触发响应
+    //  obj.foo = 100
+
+    // 解决方案：通过同属性对象，做一层转发，从而解决响应式数据丢失问题
+    //obj 是响应式数据
+    const obj = reactive({ foo: 1, bar: 2 })
+    // 创建一个同属性对象 newObj
+    const newObj = {
+        foo: {
+            get value() {
+                return obj.foo
+            },
+        },
+        bar: {
+            get value() {
+                return obj.bar
+            },
+        }
+    }
+    effect(() => {
+        // 在副作用函数内通过新的对象 newObj 读取 foo 属性值 间接读取obj.foo的值，副作用函数自然会与obj.foo建立响应联系
+        console.log(newObj.foo.value)
+    })
+    // 这时能够触发响应了
+    obj.foo = 100
+
+    // 把newObj 这种方式抽离成一个函数
+    function toRef(obj, key) {
+        const wrapper = {
+            get value() {
+                return obj[key]
+            },
+            set value(val) {
+                obj[key] = val
+            }
+        }
+         // 定义一个不可枚举的属性 _v_isRef_ ，值为 true，表示这是一个 ref 对象
+        Object.definePoroperty(wrapper, '_v_isRef_', {
+            value: true
+        })
+        return reactive(wrapper)
+    }
+    //
+    function toRefs(obj) {
+        const res = {}
+        for (const key in obj) {
+            res[key] = toRef(obj, key)
+        }
+        return res
+    }
+    // 但为了概念上的统一我们会将通过 toRef 或 toRefs 转换后得到的结果视为真正的 ref数据，为此我们需要为 toRef 函数增加一段代码
+</script>
+
+</html
