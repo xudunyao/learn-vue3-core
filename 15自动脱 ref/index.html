@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+   //1： toRefs的引入解决了响应丢失问题，但是也带来了新的问题toRefs 会把响应式数据的第一层属性值转换为 ref，因此必须通过 value 属性访问值如
+   //  const obj = reactive({ foo: 1, bar: 2 })
+   //  const newObj = toRefs(obj)
+   //  console.log(newObj.foo.value)
+   //  console.log(newObj.bar.value)
+
+   // 解决方案： 自动脱 ref 的实现使用一层代理，在代理层上实现自动脱 ref 的功能
+   function proxyRefs(target) {
+    return new Proxy(target, {
+        get(target, key, receiver) {
+            const value  = Reflect.get(target, key, receiver)
+            // 通过_v_ifRef 判断是否是ref对象
+           return value._v_ifRef ? value.value : value  
+        },
+        set(target, key, value, receiver) {
+            const oldValue = target[key]
+            if (oldValue._v_ifRef) {
+                oldValue.value = value
+                return true
+            }
+        }
+    })
+   }
+   // 调用 proxyRefs 函数创建代理
+   const newObj = proxyRefs({ ...toRefs(obj) })
+</script>
+
+</html
