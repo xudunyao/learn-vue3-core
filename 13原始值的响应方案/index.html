@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+
+</body>
+<script>
+    // 原始值指的是 Boolean、Number、BigInt、String、Symbol、undefined 和 null 等类型的值。
+
+    // 解决方案： 引入ref函数，将原始值包装为对象，从而实现响应性
+    // 简单实现
+    function reactive(target) {
+        return new Proxy(target, {
+            get(target, key, receiver) {
+                const res = Reflect.get(target, key, receiver)
+            }
+        })
+    }
+    // 简单副函数
+    function effect() {
+
+    }
+    function ref(value) {
+        const wrapper = {
+            value
+        }
+        return reactive(wrapper)
+    }
+    // 创建原始值的响应式数据
+    const refVal = ref(1)
+    effect(() => {
+        console.log(refVal.value)
+    })
+    // 修改值能够触发副作用函数重新执行
+    refVal.value = 2
+
+    //上面存在的问题，如何区分如何区分 refVal 到底是原始值的包裹对象，还是一个非原始值的响应式数据
+    // 如：const refVal1 = ref(1) const refVal1 = ref(1)   const refVal2 = reactive({ value: 1 })
+
+    // 解决方案：
+    function ref(value) {
+        const wrapper = {
+            value
+        }
+        // 定义一个不可枚举的属性 _v_isRef_ ，值为 true，表示这是一个 ref 对象
+        Object.definePoroperty(wrapper,'_v_isRef_',{
+            value: true
+        })
+        return reactive(wrapper)
+    }
+</script>
+
+</html
